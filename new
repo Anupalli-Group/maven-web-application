@@ -1,2 +1,20 @@
-this is to test webhook
-second line
+node{
+    def mavenHome = tool name : "maven3.8.6"
+    stage('checkoutcode'){
+        git branch: 'development', credentialsId: '946e9edd-5100-4fda-a720-f418a3ed6faf', url: 'https://github.com/Anupalli-Group/maven-web-application.git'
+    }
+    stage('build'){
+        sh "${mavenHome}/bin/mvn clean package"
+    }
+    stage('sonarqube report'){
+        sh "${mavenHome}/bin/mvn sonar:sonar"
+    }
+    stage('Artifacts to Nexus'){
+        sh "${mavenHome}/bin/mvn deploy"
+    }
+    stage('deploy to tomcat'){
+       sshagent(['ce5b2bdd-3529-497b-aa90-95c8d5435145']) {
+    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.42.178:/opt/apache-tomcat-9.0.68/webapps/"
+} 
+    }
+}
